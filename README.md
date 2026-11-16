@@ -10,21 +10,25 @@ This repository holds **my contribution to the backend** — the automated disas
 Civilians ─ report incidents (form or voice), view shelters & evacuation routes
                  │
                  ▼
-Spring Boot API ─ validates reports via multi-source aggregation + confidence scoring
-                 │  ├─ Kafka ingestion of incoming reports
-                 │  ├─ Emergency Response Team (ERT) resource-allocation engine
+Spring Boot API ─ validation engine: checks each report against weather, traffic, places,
+                 │  social-media and public-transport sources → INVALID / PARTIALLY_VALIDATED
+                 │  with a confidence score; an admin promotes to VALIDATED
+                 │  ├─ SQS ingestion of incoming reports, S3 for media
+                 │  ├─ Emergency Response Team (ERT) resource allocation + HERE Maps routing
                  │  └─ LLM-backed summary & report generation  ◀── this repo
                  ▼
-Authorities ─ approve allocations, dispatch units across Garda / Fire Brigade / HSE / Council,
+Authorities ─ preview, adjust and dispatch units across Garda / Fire Brigade / HSE / Council,
               publish civilian-facing summaries
 ```
 
-**Stack:** Java, Spring Boot 3, PostgreSQL, Apache Kafka, React + TypeScript (Vite), AWS, GitHub Actions CI/CD. Process: Extreme Programming practices across a ten-person team.
+**Stack:** Java 24, Spring Boot 3.5.7 (Gradle); React 19 + TypeScript (Vite); PostgreSQL on AWS RDS; backend in Docker on ECS behind an Application Load Balancer; S3 for media, SQS for ingestion, SSM Parameter Store for secrets; frontend via CloudFront; JWT authentication; HERE Maps for routing; Web Push and SSE for notifications. Tests: JUnit 5 and Mockito on the backend, Vitest on the frontend. CI/CD: GitLab CI/CD.
+
+**Process:** Extreme Programming across two semesters and six two-week sprints: five driver–navigator pairs per sprint, pairs reshuffled each sprint, review inside the pair and then by a second pair before merge, and a rotating Scrum Master.
 
 ## What I built
 
-### 1. Resource-allocation engine for Emergency Response Teams
-Computes the vehicles and crews a disaster needs from its type, severity and scale; routes the proposal through authority approval; then allocates the nearest available units across the four responding agencies, substituting across departments when one is exhausted. (Lives in the team repository; summarised here because the summary service below consumes its output.)
+### 1. Resource allocation for Emergency Response Teams
+When an authority user clicks *Calculate ERT*, the service recommends units per agency from the disaster's type, severity and scale; the user previews, adjusts and dispatches, and HERE Maps routes are computed and stored, with re-routing re-querying HERE Maps against live traffic. Allocation prefers the nearest available units and substitutes across departments when one agency is exhausted. (Lives in the team repository; summarised here because the summary service below consumes its output.)
 
 ### 2. LLM-backed disaster-summary pipeline (code in `src/`)
 
@@ -39,7 +43,7 @@ Computes the vehicles and crews a disaster needs from its type, severity and sca
 Configuration is externalised through `application.properties` (`llm.api.url`, `llm.model`, `llm.max.retries`, `report.output.directory`, external API URLs), so the same code runs against a mock endpoint in tests and a real provider in deployment.
 
 ### 3. AI rerouting tests and cross-service integration
-Wrote the test cases for the AI-assisted evacuation rerouting feature and the integration tests that exercise the report → validation → allocation → summary path end to end.
+Wrote the test cases for the AI-assisted evacuation rerouting feature and the integration tests that exercise the report → validation → allocation → summary path end to end. In semester 1 I also gathered and integrated external APIs for the thin-slice build, and I demoed the platform live.
 
 ## Design decisions worth noting
 
