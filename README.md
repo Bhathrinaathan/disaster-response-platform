@@ -1,4 +1,4 @@
-# Response to City Disasters: an LLM-assisted Disaster Management Platform
+# Response to City Disasters — Disaster Management Platform
 
 A multi-user platform for reporting, validating and responding to urban disasters, built by a ten-person team using Extreme Programming over two semesters of the Advanced Software Engineering module, MSc Computer Science, Trinity College Dublin (2025–26).
 
